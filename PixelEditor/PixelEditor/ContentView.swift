@@ -8,56 +8,82 @@
 import SwiftUI
 
 // TODO:
-// 1. Decide ultimately WHO GETS TAP/DRAG REGISTER PRIORITY?
+// 0. Decide ultimately WHO GETS TAP/DRAG REGISTER PRIORITY?
 // IS IT THE INDIVIDUAL PIXELVIEW? ORRRRRRRRR THe ContentView
 // Currenty we are doing this on the individual pixels
-// 2. Pinch to zoom
-// 3. Color picker to allow the user to pick their own colors
-// 4. Array of previously chosen colors to quickly choose from
-// 5. Export our image
-// 6. ???
-// 7. profit
+
+// 1. Data Persistence
+// 2. Paint a group of pixels
+// 3. Export our image to file or share it
+// 4. tap previously colored image to erase
+// 5. ??
 
 
 struct ContentView: View {
   @State private var columns = 8
-  @State private var rows = 8
   
-  @State private var color: Color = .white
+  @State private var selectedColor: Color = .black
+  @State private var selectedIndex: Int = 0
+
+  @State private var presets: [Color] = [.black, .red, .blue, .green]
   
-  var items: [GridItem] {
-    [GridItem(GridItem.Size.flexible(minimum: 8, maximum: .infinity), spacing: 5, alignment: .center)
-    ]
+  @State private var scale: CGFloat = 0.5
+  
+  init() {
+    selectedColor = presets.first!
   }
   
   var body: some View {
     ZStack(alignment: .bottom) {
       Color.purple.ignoresSafeArea()
       
-      ScrollView(content: {
-        VStack {
-          ForEach(0..<columns) { _ in
-            HStack {
-              ForEach(0..<rows) { _ in
-                PixelView(newColor: $color)
-                  .frame(width: 64, height: 64)
+      VStack {
+        Slider(value: $scale)
+          .padding()
+        
+        Picker("", selection: $columns) {
+          Text("8").tag(8)
+          Text("16").tag(16)
+        }
+        .pickerStyle(SegmentedPickerStyle())
+        
+        ScrollView([.vertical, .horizontal], content: {
+          VStack(spacing: 1) {
+            ForEach(0..<columns, id: \.self) { _ in
+              HStack(spacing: 1) {
+                ForEach(0..<columns, id: \.self) { _ in
+                  PixelView(newColor: $selectedColor)
+                    .frame(width: scale * 64, height: scale * 64)
+                }
               }
             }
           }
-        }
-      })
+        })
+      }
       
       
       // ON TAP / ON DRAG
       // change the square color
       //          Spacer()
-      Circle()
-        .foregroundColor(color)
-        .frame(width:100, height: 100)
-        .onTapGesture {
-          color = Color.random
+      HStack {
+        ForEach(0 ..< presets.count, id: \.self) {index in
+          Circle()
+            .frame(height: 25)
+            .shadow(color: index == selectedIndex ? Color.black : Color.clear, radius: 10)
+            .foregroundColor(presets[index])
+            .onTapGesture {
+              selectedColor = presets[index]
+              selectedIndex = index
+            }
         }
-      
+        .onChange(of: selectedColor, perform: { value in
+          presets[selectedIndex] = selectedColor
+        })
+        
+        ColorPicker("", selection: $selectedColor)
+      }
+      .padding()
+      .background(Color.purple.opacity(0.3))
       
     }
   }
@@ -66,5 +92,6 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
   static var previews: some View {
     ContentView()
+      .previewDevice("iPhone 11 Pro Max")
   }
 }
