@@ -22,4 +22,8 @@ extension Color {
     
     return Color(.sRGB, red: r, green: g, blue: b, opacity: a)
   }
+  
+  static var almostClear: Color {
+    Color(red: 1, green: 1, blue: 1, opacity: 0.001)
+  }
 }
